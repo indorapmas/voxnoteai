@@ -53,6 +53,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState("");
   const [activeFolder, setActiveFolder] = useState<string | null>(null); // null = All
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Rename recording state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -278,9 +279,11 @@ export default function DashboardPage() {
   }
 
   const usagePercent = usage ? Math.min((usage.minutes_used / usage.minutes_limit) * 100, 100) : 0;
-  const filteredRecordings = activeFolder === null
-    ? recordings
-    : recordings.filter((r) => r.folder_id === activeFolder);
+  const filteredRecordings = recordings.filter(r => {
+    const matchFolder = activeFolder === null || r.folder_id === activeFolder;
+    const matchSearch = !searchQuery || r.title.toLowerCase().includes(searchQuery.toLowerCase()) || (r.summary && r.summary.toLowerCase().includes(searchQuery.toLowerCase()));
+    return matchFolder && matchSearch;
+  });
 
   return (
     <div className="min-h-screen bg-white dark:bg-black text-zinc-900 dark:text-white flex h-screen overflow-hidden">
@@ -585,6 +588,14 @@ export default function DashboardPage() {
             {activeFolder === null ? "All Recordings" : folders.find((f) => f.id === activeFolder)?.name ?? "Folder"}
           </h2>
           <span className="text-xs text-zinc-400 dark:text-zinc-500">{filteredRecordings.length + (activeFolder ? chatSessions.filter((s) => s.folder_id === activeFolder).length : 0)}</span>
+        </div>
+        <div className="px-3 pt-2 pb-1">
+          <input
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Search recordings..."
+            className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:border-violet-500"
+          />
         </div>
 
         <div className="flex-1 overflow-y-auto">
@@ -1021,6 +1032,21 @@ export default function DashboardPage() {
                   className="text-xs border border-zinc-300 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white px-3 py-1.5 rounded-lg transition-colors"
                 >
                   Copy notes
+                </button>
+                <button
+                  onClick={() => {
+                    const content = `${selected.title}\n\n${new Date(selected.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}\n\nSUMMARY\n${selected.summary}\n\nACTION ITEMS\n${selected.action_items}`;
+                    const blob = new Blob([content], { type: "text/plain" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `${selected.title.replace(/[^a-z0-9]/gi, "_")}.txt`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="text-xs border border-zinc-300 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  Export
                 </button>
               </div>
             </div>

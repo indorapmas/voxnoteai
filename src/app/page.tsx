@@ -122,12 +122,22 @@ export default function Home() {
       <section id="features" className="max-w-5xl mx-auto px-6 pb-24">
         <h2 className="text-3xl font-bold text-center mb-3">Everything you need</h2>
         <p className="text-zinc-400 text-center mb-14">No bots. No integrations. Just open a tab and record.</p>
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-4 gap-6">
           {[
             {
               icon: "🎙️",
               title: "One-click recording",
               desc: "Record your microphone or capture system audio from any call — Zoom, Teams, Google Meet, or a phone call."
+            },
+            {
+              icon: "📹",
+              title: "Video recording",
+              desc: "Record from your camera or capture your entire screen with audio. Perfect for tutorials, demos, and video calls."
+            },
+            {
+              icon: "🔴",
+              title: "Live recording",
+              desc: "Real-time transcription as you speak. Watch your words appear on screen the moment you say them."
             },
             {
               icon: "⚡",
@@ -142,12 +152,12 @@ export default function Home() {
             {
               icon: "🔍",
               title: "Search everything",
-              desc: "Full-text search across all your recordings. Find any moment from any meeting."
+              desc: "Full-text search across all your recordings. Find any moment from any meeting instantly."
             },
             {
               icon: "📤",
               title: "Export anywhere",
-              desc: "Copy to clipboard, export as PDF, or send straight to Notion or email."
+              desc: "Copy notes to clipboard or download as a text file. Your notes, your way."
             },
             {
               icon: "🔒",
