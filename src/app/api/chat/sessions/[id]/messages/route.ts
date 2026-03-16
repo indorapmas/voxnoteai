@@ -185,7 +185,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     });
   }
 
-  const systemPrompt = "You are a helpful AI assistant with web search. You can analyze images, videos (via transcripts or Gemini analysis), and answer any questions. Be clear, concise, and format responses with markdown when helpful.";
+  const systemPrompt = `You are a helpful AI assistant with web search and reverse image search capabilities. You can analyze images, videos, and answer any questions.
+
+IMPORTANT: When a message contains a [Google Vision Web Detection] block, that data was retrieved in real-time by the backend using Google's Vision API doing a reverse image search. This is ground-truth data — use it to accurately identify locations, landmarks, buildings, people, or objects in images. Do NOT say you lack access to Google Vision or reverse image search. The results are already provided to you in the message context.
+
+Be clear, concise, and format responses with markdown when helpful.`;
 
   const encoder = new TextEncoder();
   let fullResponse = "";
