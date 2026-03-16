@@ -65,6 +65,40 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           data: fileBase64,
         },
       };
+
+      // Also run Google Vision web detection for reverse image search context
+      if (process.env.GOOGLE_VISION_API_KEY) {
+        try {
+          const visionRes = await fetch(
+            `https://vision.googleapis.com/v1/images:annotate?key=${process.env.GOOGLE_VISION_API_KEY}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                requests: [{
+                  image: { content: fileBase64 },
+                  features: [{ type: "WEB_DETECTION", maxResults: 10 }],
+                }],
+              }),
+            }
+          );
+          const visionData = await visionRes.json();
+          const web = visionData.responses?.[0]?.webDetection;
+          if (web) {
+            const parts: string[] = [];
+            if (web.bestGuessLabels?.length)
+              parts.push(`Best guess: ${web.bestGuessLabels.map((l: { label: string }) => l.label).join(", ")}`);
+            if (web.webEntities?.length)
+              parts.push(`Web entities: ${web.webEntities.slice(0, 8).map((e: { description: string; score: number }) => `${e.description} (${e.score.toFixed(2)})`).join(", ")}`);
+            if (web.pagesWithMatchingImages?.length)
+              parts.push(`Found on pages: ${web.pagesWithMatchingImages.slice(0, 3).map((p: { url: string; pageTitle?: string }) => p.pageTitle ? `${p.pageTitle} — ${p.url}` : p.url).join(" | ")}`);
+            if (parts.length)
+              fileContext = `[Google Vision Web Detection]\n${parts.join("\n")}`;
+          }
+        } catch (err) {
+          console.error("Google Vision error:", err);
+        }
+      }
     } else if (fileType.startsWith("video/")) {
       if (isPaid) {
         // Paid plan → full Gemini video analysis
@@ -136,11 +170,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   // Add current message with optional image
   if (claudeImageContent) {
+    const textParts = [fileContext, message || "Analyze this image."].filter(Boolean).join("\n\n");
     claudeMessages.push({
       role: "user",
       content: [
         claudeImageContent,
-        { type: "text", text: message || "Analyze this image." },
+        { type: "text", text: textParts },
       ],
     });
   } else {
