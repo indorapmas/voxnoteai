@@ -726,8 +726,19 @@ export default function DashboardPage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="font-semibold text-white text-xs">New Recording</p>
+                  <p className="font-semibold text-white text-xs">New Audio Recording</p>
                   <p className="text-violet-200 text-xs mt-0.5">Mic or system audio</p>
+                </div>
+              </Link>
+              <Link href="/record" className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 flex flex-col gap-2">
+                <div className="w-8 h-8 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                  <svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-semibold text-xs text-zinc-900 dark:text-white">New Video Recording</p>
+                  <p className="text-zinc-500 text-xs mt-0.5">{usage?.plan === "free" ? <span className="text-yellow-500">Pro+ required</span> : "Camera or screen"}</p>
                 </div>
               </Link>
               <Link href="/live" className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 flex flex-col gap-2">
@@ -735,7 +746,7 @@ export default function DashboardPage() {
                   <div className="w-3 h-3 bg-red-500 rounded-full" />
                 </div>
                 <div>
-                  <p className="font-semibold text-sm text-zinc-900 dark:text-white text-xs">Live Recording</p>
+                  <p className="font-semibold text-xs text-zinc-900 dark:text-white">Live Recording</p>
                   <p className="text-zinc-500 text-xs mt-0.5">Real-time transcript</p>
                 </div>
               </Link>
@@ -750,6 +761,17 @@ export default function DashboardPage() {
                   <p className="text-zinc-500 text-xs mt-0.5">Ask AI anything</p>
                 </div>
               </button>
+              <Link href="/plans" className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 flex flex-col gap-2">
+                <div className="w-8 h-8 bg-emerald-500/20 rounded-xl flex items-center justify-center">
+                  <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-semibold text-xs text-zinc-900 dark:text-white">Upgrade Plan</p>
+                  <p className="text-zinc-500 text-xs mt-0.5">More minutes + video</p>
+                </div>
+              </Link>
               <div className="bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 flex flex-col gap-2">
                 <div className="w-8 h-8 bg-zinc-200 dark:bg-zinc-800 rounded-xl flex items-center justify-center">
                   <svg className="w-4 h-4 text-zinc-500 dark:text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
