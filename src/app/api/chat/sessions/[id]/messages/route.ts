@@ -150,105 +150,33 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     });
   }
 
-  const systemPrompt = "You are a helpful AI assistant with access to web search. You can analyze images, videos (via transcripts or Gemini analysis), and answer any questions. When the user asks about current events, recent news, live data, prices, or anything that requires up-to-date information, use the web_search tool. Be clear, concise, and format responses with markdown when helpful.";
-
-  const webSearchTool: Anthropic.Tool = {
-    name: "web_search",
-    description: "Search the web for current information, news, facts, prices, or any topic requiring up-to-date data.",
-    input_schema: {
-      type: "object" as const,
-      properties: {
-        query: { type: "string", description: "The search query" },
-      },
-      required: ["query"],
-    },
-  };
-
-  async function tavilySearch(query: string): Promise<string> {
-    try {
-      const res = await fetch("https://api.tavily.com/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          api_key: process.env.TAVILY_API_KEY,
-          query,
-          max_results: 5,
-          search_depth: "basic",
-        }),
-      });
-      const data = await res.json();
-      if (!data.results?.length) return "No results found.";
-      return data.results
-        .map((r: { title: string; url: string; content: string }) =>
-          `**${r.title}**\nSource: ${r.url}\n${r.content}`)
-        .join("\n\n---\n\n");
-    } catch {
-      return "Search failed. Please try again.";
-    }
-  }
+  const systemPrompt = "You are a helpful AI assistant with web search. You can analyze images, videos (via transcripts or Gemini analysis), and answer any questions. Be clear, concise, and format responses with markdown when helpful.";
 
   const encoder = new TextEncoder();
   let fullResponse = "";
+  let isSearching = false;
 
-  // First call — may trigger tool use
-  const firstResponse = await anthropic.messages.create({
+  const stream = await anthropic.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 2048,
     system: systemPrompt,
     messages: claudeMessages,
-    tools: [webSearchTool],
+    tools: [{ type: "web_search_20250305", name: "web_search" } as unknown as Anthropic.Tool],
+    stream: true,
   });
 
   const readable = new ReadableStream({
     async start(controller) {
-      let messagesForFinal = [...claudeMessages];
-
-      if (firstResponse.stop_reason === "tool_use") {
-        // Signal searching to frontend
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ searching: true })}\n\n`));
-
-        // Run all search tool calls
-        const toolResults: Anthropic.ToolResultBlockParam[] = [];
-        for (const block of firstResponse.content) {
-          if (block.type === "tool_use" && block.name === "web_search") {
-            const query = (block.input as { query: string }).query;
-            const results = await tavilySearch(query);
-            toolResults.push({ type: "tool_result", tool_use_id: block.id, content: results });
-          }
-        }
-
-        // Build messages with tool results
-        messagesForFinal = [
-          ...claudeMessages,
-          { role: "assistant" as const, content: firstResponse.content },
-          { role: "user" as const, content: toolResults },
-        ];
-
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ searching: false })}\n\n`));
-      } else {
-        // No search needed — stream the text from firstResponse directly
-        for (const block of firstResponse.content) {
-          if (block.type === "text") {
-            fullResponse += block.text;
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: block.text })}\n\n`));
-          }
-        }
-        await admin.from("chat_messages").insert({ session_id: id, role: "assistant", content: fullResponse });
-        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-        controller.close();
-        return;
-      }
-
-      // Stream final answer after tool use
-      const stream = await anthropic.messages.create({
-        model: "claude-sonnet-4-6",
-        max_tokens: 2048,
-        system: systemPrompt,
-        messages: messagesForFinal,
-        stream: true,
-      });
-
       for await (const event of stream) {
+        if (event.type === "content_block_start") {
+          if (event.content_block.type === "tool_use" && event.content_block.name === "web_search") {
+            isSearching = true;
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ searching: true })}\n\n`));
+          } else if (isSearching && event.content_block.type === "text") {
+            isSearching = false;
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ searching: false })}\n\n`));
+          }
+        }
         if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
           const text = event.delta.text;
           fullResponse += text;
