@@ -44,6 +44,7 @@ type ChatSession = {
 export default function DashboardPage() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [recordings, setRecordings] = useState<Recording[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
@@ -283,9 +284,14 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-black text-zinc-900 dark:text-white flex h-screen overflow-hidden">
+      {/* Mobile backdrop */}
+      {mobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setMobileMenuOpen(false)} />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-56 bg-zinc-50 dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 flex flex-col flex-shrink-0">
-        <div className="p-4 border-b border-zinc-200 dark:border-zinc-800">
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 md:relative md:w-56 md:translate-x-0 md:z-auto flex flex-col flex-shrink-0 bg-zinc-50 dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 transition-transform duration-200 ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2">
             <div className="w-6 h-6 bg-violet-500 rounded-md flex items-center justify-center flex-shrink-0">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
@@ -295,6 +301,11 @@ export default function DashboardPage() {
             </div>
             <span className="font-bold text-sm">VoxNote AI</span>
           </Link>
+          <button onClick={() => setMobileMenuOpen(false)} className="md:hidden text-zinc-400 hover:text-zinc-700 dark:hover:text-white">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
         <div className="p-3 space-y-2">
@@ -552,7 +563,7 @@ export default function DashboardPage() {
       </aside>
 
       {/* Recordings list */}
-      <div className="w-72 border-r border-zinc-200 dark:border-zinc-800 flex flex-col flex-shrink-0 bg-zinc-50/80 dark:bg-zinc-950/50">
+      <div className="hidden md:flex flex-col w-72 border-r border-zinc-200 dark:border-zinc-800 flex-shrink-0 bg-zinc-50/80 dark:bg-zinc-950/50">
         <div className="px-4 py-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
           <h2 className="text-sm font-semibold">
             {activeFolder === null ? "All Recordings" : folders.find((f) => f.id === activeFolder)?.name ?? "Folder"}
@@ -665,7 +676,122 @@ export default function DashboardPage() {
       </div>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col overflow-hidden bg-white dark:bg-black">
+      <main className="flex-1 flex flex-col overflow-hidden bg-white dark:bg-black min-w-0">
+
+        {/* Mobile top bar */}
+        <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-800 flex-shrink-0">
+          <button onClick={() => setMobileMenuOpen(true)} className="text-zinc-500 dark:text-zinc-400 p-1">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <span className="font-bold text-sm truncate mx-3 flex-1">{selected ? selected.title : "VoxNote AI"}</span>
+          <Link href="/record" className="bg-violet-500 hover:bg-violet-600 text-white p-1.5 rounded-lg">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          </Link>
+        </div>
+
+        {/* Mobile recordings list (shown when nothing selected) */}
+        {!selected && (
+          <div className="md:hidden flex-1 overflow-y-auto">
+            {loading ? (
+              <div className="p-4 space-y-2">
+                {[1,2,3].map(i => (
+                  <div key={i} className="bg-zinc-100 dark:bg-zinc-900 rounded-xl p-4 animate-pulse">
+                    <div className="h-3 bg-zinc-200 dark:bg-zinc-800 rounded w-2/3 mb-2" />
+                    <div className="h-2.5 bg-zinc-200 dark:bg-zinc-800 rounded w-full" />
+                  </div>
+                ))}
+              </div>
+            ) : recordings.length === 0 ? (
+              <div className="text-center py-20 px-6">
+                <p className="text-zinc-500 text-sm mb-4">No recordings yet</p>
+                <Link href="/record" className="bg-violet-500 hover:bg-violet-600 text-white text-sm font-medium px-5 py-2.5 rounded-xl inline-block">Start recording</Link>
+              </div>
+            ) : (
+              <div className="p-3 space-y-2">
+                {recordings.map(r => (
+                  <button key={r.id} onClick={() => selectRecording(r)} className="w-full text-left bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 transition-colors">
+                    <p className="text-sm font-medium mb-1 truncate">{r.title}</p>
+                    <p className="text-xs text-zinc-500 line-clamp-2">{r.summary}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-xs text-zinc-400">{r.duration_minutes} min</span>
+                      <span className="text-zinc-300 dark:text-zinc-700">·</span>
+                      <span className="text-xs text-zinc-400">{new Date(r.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Mobile detail view (shown when recording selected) */}
+        {selected && (
+          <div className="md:hidden flex-1 flex flex-col overflow-hidden">
+            <button onClick={() => setSelected(null)} className="flex items-center gap-2 px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white border-b border-zinc-200 dark:border-zinc-800 flex-shrink-0">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              All recordings
+            </button>
+            <div className="flex border-b border-zinc-200 dark:border-zinc-800 flex-shrink-0">
+              <button onClick={() => setActiveTab("notes")} className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 ${activeTab === "notes" ? "border-violet-500 text-zinc-900 dark:text-white" : "border-transparent text-zinc-500"}`}>Notes</button>
+              <button onClick={() => setActiveTab("chat")} className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 ${activeTab === "chat" ? "border-violet-500 text-zinc-900 dark:text-white" : "border-transparent text-zinc-500"}`}>Ask AI</button>
+            </div>
+            {activeTab === "notes" ? (
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4">
+                  <h2 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-2 uppercase tracking-wider">Summary</h2>
+                  <p className="text-zinc-700 dark:text-zinc-200 text-sm leading-relaxed whitespace-pre-wrap">{selected.summary}</p>
+                </div>
+                {selected.action_items && (
+                  <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4">
+                    <h2 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-2 uppercase tracking-wider">Action Items</h2>
+                    <div className="space-y-2">
+                      {selected.action_items.split("\n").filter(Boolean).map((item, i) => (
+                        <div key={i} className="flex items-start gap-2 text-sm text-zinc-700 dark:text-zinc-200">
+                          <div className="w-1.5 h-1.5 bg-violet-400 rounded-full mt-1.5 flex-shrink-0" />
+                          {item.replace(/^[-•*]\s*/, "")}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  {messages.map((msg, i) => (
+                    <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                      <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${msg.role === "user" ? "bg-violet-500 text-white rounded-br-sm" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 rounded-bl-sm"}`}>
+                        {msg.content || <span className="flex gap-1"><span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce" /><span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce" style={{animationDelay:"150ms"}} /><span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce" style={{animationDelay:"300ms"}} /></span>}
+                      </div>
+                    </div>
+                  ))}
+                  <div ref={chatEndRef} />
+                </div>
+                <div className="p-3 border-t border-zinc-200 dark:border-zinc-800 flex gap-2">
+                  <input
+                    value={chatInput}
+                    onChange={e => setChatInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") sendChat(); }}
+                    placeholder="Ask about this recording..."
+                    className="flex-1 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:border-violet-500"
+                  />
+                  <button onClick={sendChat} disabled={!chatInput.trim() || chatLoading} className="bg-violet-500 hover:bg-violet-600 disabled:opacity-40 text-white p-2 rounded-xl">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Desktop content */}
+        <div className="hidden md:flex flex-col flex-1 overflow-hidden">
         {!selected ? (
           <div className="flex-1 overflow-y-auto p-8">
             {/* Welcome */}
@@ -948,6 +1074,7 @@ export default function DashboardPage() {
             )}
           </div>
         )}
+        </div>
       </main>
     </div>
   );
