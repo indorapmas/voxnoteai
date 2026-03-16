@@ -127,7 +127,7 @@ export default function Home() {
             {
               icon: "🎙️",
               title: "One-click recording",
-              desc: "Record your microphone or capture system audio from any call — Zoom, Teams, Google Meet, or a phone call."
+              desc: "Record your microphone or capture system audio from anything — meetings, lectures, podcasts, calls, or any audio playing on your device."
             },
             {
               icon: "📹",
