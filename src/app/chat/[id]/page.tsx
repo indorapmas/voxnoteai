@@ -19,6 +19,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [searching, setSearching] = useState(false);
   const [plan, setPlan] = useState<string>("free");
   const [sessionTitle, setSessionTitle] = useState("New Chat");
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
@@ -121,12 +122,15 @@ export default function ChatPage() {
         const data = line.slice(6);
         if (data === "[DONE]") break;
         try {
-          const { text } = JSON.parse(data);
+          const parsed = JSON.parse(data);
+          if (parsed.searching === true) { setSearching(true); continue; }
+          if (parsed.searching === false) { setSearching(false); continue; }
+          if (!parsed.text) continue;
           setMessages((prev) => {
             const updated = [...prev];
             updated[updated.length - 1] = {
               ...updated[updated.length - 1],
-              content: updated[updated.length - 1].content + text,
+              content: updated[updated.length - 1].content + parsed.text,
             };
             return updated;
           });
@@ -144,6 +148,7 @@ export default function ChatPage() {
       }
     }
 
+    setSearching(false);
     setLoading(false);
   }
 
@@ -184,8 +189,14 @@ export default function ChatPage() {
                 </svg>
               </div>
               <h2 className="text-lg font-semibold mb-2">Start a conversation</h2>
-              <p className="text-zinc-500 text-sm max-w-sm mx-auto">Ask anything or attach a photo/video to analyze it with AI.</p>
-              <div className="flex items-center justify-center gap-4 mt-6">
+              <p className="text-zinc-500 text-sm max-w-sm mx-auto">Ask anything, search the web, or attach a photo/video to analyze it with AI.</p>
+              <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
+                <div className="flex items-center gap-2 text-xs text-zinc-500 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2">
+                  <svg className="w-3.5 h-3.5 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  Web search
+                </div>
                 <div className="flex items-center gap-2 text-xs text-zinc-500 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2">
                   <svg className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -253,6 +264,14 @@ export default function ChatPage() {
                         {msg.content}
                       </ReactMarkdown>
                     ) : msg.content
+                  ) : searching ? (
+                    <span className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+                      <svg className="w-3.5 h-3.5 animate-spin text-violet-500" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                      </svg>
+                      Searching the web…
+                    </span>
                   ) : (
                     <span className="flex gap-1 items-center h-4">
                       <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
