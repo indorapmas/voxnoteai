@@ -8,19 +8,19 @@ export const PLANS = {
   starter: {
     name: 'Starter',
     price: 12,
-    minutes: 600,
+    minutes: 120,
     priceId: process.env.NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID!,
   },
   pro: {
     name: 'Pro',
     price: 25,
-    minutes: 1800,
+    minutes: 300,
     priceId: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID!,
   },
   power: {
     name: 'Power',
     price: 59,
-    minutes: 6000,
+    minutes: 900,
     priceId: process.env.NEXT_PUBLIC_STRIPE_POWER_PRICE_ID!,
   },
 }
