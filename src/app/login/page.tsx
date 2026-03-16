@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
@@ -11,6 +11,16 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [isWebView, setIsWebView] = useState(false);
+
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    const webview =
+      /wv/.test(ua) ||
+      /FBAN|FBAV|Instagram|LinkedInApp|Twitter/.test(ua) ||
+      (/iPhone|iPad|iPod/.test(ua) && !/Safari/.test(ua) && /AppleWebKit/.test(ua));
+    setIsWebView(webview);
+  }, []);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -33,6 +43,34 @@ export default function LoginPage() {
       provider: "google",
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
+  }
+
+  if (isWebView) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center px-6">
+        <div className="w-full max-w-sm text-center">
+          <div className="w-14 h-14 bg-violet-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
+              <path d="M12 15c1.66 0 3-1.34 3-3V6c0-1.66-1.34-3-3-3S9 4.34 9 6v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V6z"/>
+              <path d="M17 12c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-2.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+            </svg>
+          </div>
+          <h1 className="text-white text-xl font-bold mb-3">Open in your browser</h1>
+          <p className="text-zinc-400 text-sm mb-6">
+            Google sign-in doesn&apos;t work inside in-app browsers. Please open this page in Safari or Chrome to continue.
+          </p>
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-left mb-4">
+            <p className="text-zinc-300 text-sm font-medium mb-1">On iPhone / Safari</p>
+            <p className="text-zinc-500 text-xs">Tap the share icon <span className="text-zinc-300">⬆</span> → &quot;Open in Safari&quot;</p>
+          </div>
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-left">
+            <p className="text-zinc-300 text-sm font-medium mb-1">On Android / Chrome</p>
+            <p className="text-zinc-500 text-xs">Tap the three-dot menu → &quot;Open in Chrome&quot;</p>
+          </div>
+          <p className="text-zinc-600 text-xs mt-6">voxnoteai.vercel.app</p>
+        </div>
+      </div>
+    );
   }
 
   return (
